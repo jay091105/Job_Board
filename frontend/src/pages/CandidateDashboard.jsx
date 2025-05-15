@@ -1,0 +1,498 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+
+const CandidateDashboard = () => {
+  const [applications, setApplications] = useState([]);
+  const [savedJobs, setSavedJobs] = useState([]);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [stats, setStats] = useState({
+    totalApplications: 0,
+    interviews: 0,
+    offers: 0,
+    savedJobs: 0
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setError(null);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const [applicationsResponse, profileResponse, savedJobsResponse] = await Promise.all([
+          axios.get('http://localhost:5000/api/applications/candidate', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }),
+          axios.get('http://localhost:5000/api/users/profile', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }),
+          axios.get('http://localhost:5000/api/jobs/saved', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+        ]);
+        
+        setApplications(applicationsResponse.data.data || []);
+        setProfile(profileResponse.data.data);
+        setSavedJobs(savedJobsResponse.data.data || []);
+        
+        // Calculate statistics
+        const stats = {
+          totalApplications: (applicationsResponse.data.data || []).length,
+          interviews: (applicationsResponse.data.data || []).filter(app => app.status === 'interview').length,
+          offers: (applicationsResponse.data.data || []).filter(app => app.status === 'offered').length,
+          savedJobs: (savedJobsResponse.data.data || []).length
+        };
+        setStats(stats);
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        if (error.response?.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('token');
+          localStorage.removeItem('userRole');
+          window.location.href = '/login';
+        } else {
+          setError(error.response?.data?.message || 'Error loading dashboard data');
+        }
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleUnsaveJob = async (jobId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/jobs/${jobId}/save`);
+      setSavedJobs(savedJobs.filter(job => job._id !== jobId));
+      setStats(prev => ({
+        ...prev,
+        savedJobs: prev.savedJobs - 1
+      }));
+    } catch (error) {
+      console.error('Error unsaving job:', error);
+      setError(error.response?.data?.message || 'Error unsaving job');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+          <p className="text-gray-600">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 py-8">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+          <h1 className="text-3xl font-bold text-primary-900 mb-4 sm:mb-0">Candidate Dashboard</h1>
+          <div className="flex gap-2">
+            <Link
+              to="/profile"
+              className="bg-gradient-primary text-white px-4 py-2 rounded-lg hover:shadow-glow transition duration-300 w-full sm:w-auto text-center"
+            >
+              Edit Profile
+            </Link>
+            <Link
+              to="/jobs"
+              className="bg-gradient-primary text-white px-4 py-2 rounded-lg hover:shadow-glow transition duration-300 w-full sm:w-auto text-center"
+            >
+              Find Jobs
+            </Link>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-lg shadow-soft p-6 border border-primary-100 hover:shadow-glow transition duration-300">
+            <h3 className="text-primary-600 text-sm font-medium">Total Applications</h3>
+            <p className="text-3xl font-bold text-primary-900">{stats.totalApplications}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-soft p-6 border border-primary-100 hover:shadow-glow transition duration-300">
+            <h3 className="text-primary-600 text-sm font-medium">Interviews</h3>
+            <p className="text-3xl font-bold text-primary-900">{stats.interviews}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-soft p-6 border border-primary-100 hover:shadow-glow transition duration-300">
+            <h3 className="text-primary-600 text-sm font-medium">Offers</h3>
+            <p className="text-3xl font-bold text-primary-900">{stats.offers}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-soft p-6 border border-primary-100 hover:shadow-glow transition duration-300">
+            <h3 className="text-primary-600 text-sm font-medium">Saved Jobs</h3>
+            <p className="text-3xl font-bold text-primary-900">{stats.savedJobs}</p>
+          </div>
+        </div>
+
+        <div className="bg-white/80 rounded-2xl shadow-xl overflow-hidden border-2 border-primary-300 hover:border-primary-500 hover:shadow-glow transition-all duration-300">
+          <div className="flex flex-col sm:flex-row border-b-2 border-primary-300">
+            <button
+              className={`px-4 py-2 sm:px-6 sm:py-3 text-left transition duration-200 ${
+                activeTab === 'overview' ? 'bg-primary-50 text-primary-600 font-medium' : 'text-primary-600 hover:bg-primary-50'
+              }`}
+              onClick={() => setActiveTab('overview')}
+            >
+              Overview
+            </button>
+            <button
+              className={`px-4 py-2 sm:px-6 sm:py-3 text-left transition duration-200 ${
+                activeTab === 'applications' ? 'bg-primary-50 text-primary-600 font-medium' : 'text-primary-600 hover:bg-primary-50'
+              }`}
+              onClick={() => setActiveTab('applications')}
+            >
+              My Applications
+            </button>
+            <button
+              className={`px-4 py-2 sm:px-6 sm:py-3 text-left transition duration-200 ${
+                activeTab === 'saved' ? 'bg-primary-50 text-primary-600 font-medium' : 'text-primary-600 hover:bg-primary-50'
+              }`}
+              onClick={() => setActiveTab('saved')}
+            >
+              Saved Jobs
+            </button>
+            <button
+              className={`px-4 py-2 sm:px-6 sm:py-3 text-left transition duration-200 ${
+                activeTab === 'profile' ? 'bg-primary-50 text-primary-600 font-medium' : 'text-primary-600 hover:bg-primary-50'
+              }`}
+              onClick={() => setActiveTab('profile')}
+            >
+              My Profile
+            </button>
+          </div>
+
+          {activeTab === 'overview' && (
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Recent Applications */}
+                <div className="bg-white/80 border-2 border-primary-300 rounded-2xl p-6 shadow-xl hover:border-primary-500 hover:shadow-glow transition-all duration-300">
+                  <h3 className="text-xl font-semibold text-primary-900 mb-4">Recent Applications</h3>
+                  <div className="space-y-4">
+                    {applications.slice(0, 3).map(application => (
+                      <div key={application._id} className="border-b border-primary-100 pb-4 last:border-b-0 last:pb-0">
+                        <h4 className="font-medium text-primary-900">{application.job.title}</h4>
+                        <p className="text-sm text-primary-600">{application.job.company}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            application.status === 'interview' ? 'bg-primary-100 text-primary-800' :
+                            application.status === 'offered' ? 'bg-primary-100 text-primary-800' :
+                            application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-primary-100 text-primary-800'
+                          }`}>
+                            {application.status}
+                          </span>
+                          <span className="text-xs text-primary-500">
+                            {new Date(application.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {applications.length > 3 && (
+                    <Link
+                      to="/applications"
+                      className="text-primary-600 hover:text-primary-700 text-sm mt-4 inline-block font-medium"
+                    >
+                      View all applications →
+                    </Link>
+                  )}
+                </div>
+
+                {/* Profile Completion */}
+                <div className="bg-white/80 border-2 border-primary-300 rounded-2xl p-6 shadow-xl hover:border-primary-500 hover:shadow-glow transition-all duration-300">
+                  <h3 className="text-xl font-semibold text-primary-900 mb-4">Profile Completion</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-primary-600">Basic Information</span>
+                      <span className="text-green-600">✓</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-primary-600">Resume</span>
+                      <span className={profile.resume ? 'text-green-600' : 'text-red-600'}>
+                        {profile.resume ? '✓' : '✗'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-primary-600">Skills</span>
+                      <span className={profile.skills?.length > 0 ? 'text-green-600' : 'text-red-600'}>
+                        {profile.skills?.length > 0 ? '✓' : '✗'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-primary-600">Experience</span>
+                      <span className={profile.experience?.length > 0 ? 'text-green-600' : 'text-red-600'}>
+                        {profile.experience?.length > 0 ? '✓' : '✗'}
+                      </span>
+                    </div>
+                  </div>
+                  <Link
+                    to="/profile"
+                    className="text-primary-600 hover:text-primary-700 text-sm mt-4 inline-block font-medium"
+                  >
+                    Complete your profile →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'applications' && (
+            <div className="p-6">
+              <div className="grid grid-cols-1 gap-4">
+                {applications.map(application => (
+                  <div key={application._id} className="bg-white/80 border-2 border-primary-300 rounded-2xl p-6 shadow-xl hover:border-primary-500 hover:shadow-glow transition-all duration-300">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold text-primary-900 mb-2">{application.job.title}</h3>
+                        <p className="text-primary-600 mb-2">{application.job.company}</p>
+                        <p className="text-primary-500 mb-2">{application.job.location}</p>
+                        <div className="flex flex-wrap gap-2">
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            application.status === 'interview' ? 'bg-primary-100 text-primary-800' :
+                            application.status === 'offered' ? 'bg-primary-100 text-primary-800' :
+                            application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-primary-100 text-primary-800'
+                          }`}>
+                            {application.status}
+                          </span>
+                          <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm">
+                            {new Date(application.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <Link
+                          to={`/jobs/${application.job._id}`}
+                          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition duration-300 w-full sm:w-auto text-center"
+                        >
+                          View Job
+                        </Link>
+                        <Link
+                          to={`/applications/${application._id}`}
+                          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition duration-300 w-full sm:w-auto text-center"
+                        >
+                          View Application
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'saved' && (
+            <div className="p-6">
+              {savedJobs.length === 0 ? (
+                <div className="text-center py-8">
+                  <h3 className="text-xl font-semibold text-primary-600 mb-2">No saved jobs</h3>
+                  <p className="text-primary-500 mb-4">Jobs you save will appear here</p>
+                  <Link
+                    to="/jobs"
+                    className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition duration-300 inline-block"
+                  >
+                    Browse Jobs
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {savedJobs.map(job => (
+                    <div key={job._id} className="bg-white/80 border-2 border-primary-300 rounded-2xl p-6 shadow-xl hover:border-primary-500 hover:shadow-glow transition-all duration-300">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-semibold text-primary-900 mb-2">{job.title}</h3>
+                          <p className="text-primary-600 mb-2">{job.company}</p>
+                          <p className="text-primary-500 mb-2">{job.location}</p>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm">
+                              {job.jobType}
+                            </span>
+                            <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                              {job.experience}
+                            </span>
+                            <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                              ${job.salary}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                          <Link
+                            to={`/jobs/${job._id}`}
+                            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition duration-300 w-full sm:w-auto text-center"
+                          >
+                            View Details
+                          </Link>
+                          <Link
+                            to={`/jobs/${job._id}/apply`}
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300 w-full sm:w-auto text-center"
+                          >
+                            Apply Now
+                          </Link>
+                          <button
+                            onClick={() => handleUnsaveJob(job._id)}
+                            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300 w-full sm:w-auto text-center"
+                          >
+                            Unsave
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'profile' && profile && (
+            <div className="p-6">
+              <div className="bg-white/80 border-2 border-primary-300 rounded-2xl p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
+                    <div className="space-y-3">
+                      <p className="text-primary-600">
+                        <span className="font-medium">Name:</span> {profile.name}
+                      </p>
+                      <p className="text-primary-600">
+                        <span className="font-medium">Email:</span> {profile.email}
+                      </p>
+                      <p className="text-primary-600">
+                        <span className="font-medium">Phone:</span> {profile.phone || 'Not provided'}
+                      </p>
+                      <p className="text-primary-600">
+                        <span className="font-medium">Location:</span> {profile.location || 'Not provided'}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Professional Information</h3>
+                    <div className="space-y-3">
+                      <p className="text-primary-600">
+                        <span className="font-medium">Title:</span> {profile.title || 'Not provided'}
+                      </p>
+                      <p className="text-primary-600">
+                        <span className="font-medium">Experience:</span>{' '}
+                        {(() => {
+                          try {
+                            if (!profile.experience) return 'Not provided';
+                            const exp = typeof profile.experience === 'string' 
+                              ? JSON.parse(profile.experience) 
+                              : profile.experience;
+                            return Array.isArray(exp) && exp.length > 0 
+                              ? exp[0].description 
+                              : 'Not provided';
+                          } catch (e) {
+                            return 'Not provided';
+                          }
+                        })()}
+                      </p>
+                      <p className="text-primary-600">
+                        <span className="font-medium">Education:</span>{' '}
+                        {(() => {
+                          try {
+                            if (!profile.education) return 'Not provided';
+                            const edu = typeof profile.education === 'string' 
+                              ? JSON.parse(profile.education) 
+                              : profile.education;
+                            return Array.isArray(edu) && edu.length > 0 
+                              ? edu[0].description?.replace(/\r\n/g, '') 
+                              : 'Not provided';
+                          } catch (e) {
+                            return 'Not provided';
+                          }
+                        })()}
+                      </p>
+                      <p className="text-primary-600">
+                        <span className="font-medium">Skills:</span>{' '}
+                        {(() => {
+                          try {
+                            if (!profile.skills) return 'Not provided';
+                            const skills = typeof profile.skills === 'string' 
+                              ? JSON.parse(profile.skills) 
+                              : profile.skills;
+                            return Array.isArray(skills) && skills.length > 0 
+                              ? skills[0].join(', ') 
+                              : 'Not provided';
+                          } catch (e) {
+                            return 'Not provided';
+                          }
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                {profile.resume && (
+                  <div className="mt-6 pt-6 border-t border-primary-100">
+                    <h3 className="text-lg font-semibold mb-4">Resume</h3>
+                    <div className="flex gap-4">
+                      <a
+                        href={`http://localhost:5000${profile.resume}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:underline flex items-center gap-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                        </svg>
+                        View Resume
+                      </a>
+                      <a
+                        href={`http://localhost:5000${profile.resume}`}
+                        download
+                        className="text-green-600 hover:underline flex items-center gap-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                        Download Resume
+                      </a>
+                    </div>
+                  </div>
+                )}
+                <div className="mt-6 pt-6 border-t border-primary-100">
+                  <Link
+                    to="/profile"
+                    className="text-primary-600 hover:underline"
+                  >
+                    Edit Full Profile →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CandidateDashboard; 
