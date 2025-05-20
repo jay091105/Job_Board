@@ -6,18 +6,36 @@ import { AuthContext } from '../context/AuthContext';
 const PostJob = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useContext(AuthContext);
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     title: 'Software Developer',
-    description: 'We are looking for a skilled Software Developer to join our team. The ideal candidate will be responsible for developing and maintaining high-quality software solutions.',
-    requirements: 'Bachelor\'s degree in Computer Science or related field\n3+ years of experience in software development\nStrong knowledge of JavaScript, React, and Node.js\nExperience with database design and management\nExcellent problem-solving skills',
+    description: `We are looking for a skilled Software Developer to join our team. The ideal candidate will be responsible for:
+
+• Developing and maintaining high-quality software solutions
+• Collaborating with cross-functional teams to define and implement new features
+• Writing clean, efficient, and maintainable code
+• Participating in code reviews and providing constructive feedback
+• Troubleshooting and fixing bugs
+• Staying up-to-date with emerging technologies`,
+    requirements: `• Bachelor's degree in Computer Science or related field
+• 3+ years of experience in software development
+• Strong proficiency in JavaScript, React, and Node.js
+• Experience with RESTful APIs and microservices
+• Solid understanding of software design patterns and principles
+• Excellent problem-solving and analytical skills
+• Strong communication and teamwork abilities
+• Experience with Git version control`,
     company: 'Tech Solutions Inc.',
     location: 'New York, NY',
     type: 'Full-time',
     category: 'Technology',
     experience: 'Mid-level',
     salary: '80000 - 100000',
-    skills: 'JavaScript, React, Node.js, MongoDB, Express',
-    applicationDeadline: ''
+    skills: 'JavaScript, React, Node.js, TypeScript, MongoDB, REST APIs',
+    applicationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+    benefits: ['Health Insurance', 'Remote Work', 'Flexible Hours', 'Paid Time Off'],
+    workSchedule: '9:00 AM - 5:00 PM EST',
+    remote: true
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -30,53 +48,105 @@ const PostJob = () => {
     'Marketing', 'Sales', 'Design', 'Engineering', 
     'Customer Service', 'Administrative', 'Other'
   ];
+  const benefitOptions = [
+    'Health Insurance',
+    '401(k)',
+    'Remote Work',
+    'Flexible Hours',
+    'Paid Time Off',
+    'Professional Development',
+    'Gym Membership',
+    'Stock Options'
+  ];
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: value
-    }));
+    const { name, value, type, checked } = e.target;
+    
+    if (type === 'checkbox') {
+      if (name === 'benefits') {
+        const updatedBenefits = checked
+          ? [...formData.benefits, value]
+          : formData.benefits.filter(benefit => benefit !== value);
+        
+        setFormData(prev => ({
+          ...prev,
+          benefits: updatedBenefits
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [name]: checked
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
 
     if (errors[name]) {
-      setErrors(prevErrors => ({
-        ...prevErrors,
+      setErrors(prev => ({
+        ...prev,
         [name]: ''
       }));
     }
   };
 
-  const validateForm = () => {
+  const validateStep = (step) => {
     const newErrors = {};
     
-    const requiredFields = ['title', 'description', 'requirements', 'company', 'location', 'type', 'category'];
-    requiredFields.forEach(field => {
-      if (!formData[field]) {
-        newErrors[field] = `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
-      }
-    });
-    
-    if (!formData.skills) {
-      newErrors.skills = 'Please specify at least one required skill';
-    }
-    
-    if (formData.applicationDeadline) {
-      const deadlineDate = new Date(formData.applicationDeadline);
-      const currentDate = new Date();
-      
-      if (deadlineDate < currentDate) {
-        newErrors.applicationDeadline = 'Application deadline cannot be in the past';
-      }
+    switch (step) {
+      case 1:
+        if (!formData.title.trim()) newErrors.title = 'Job title is required';
+        if (!formData.company.trim()) newErrors.company = 'Company name is required';
+        if (!formData.location.trim()) newErrors.location = 'Location is required';
+        break;
+      case 2:
+        if (!formData.description.trim()) newErrors.description = 'Job description is required';
+        if (!formData.requirements.trim()) newErrors.requirements = 'Requirements are required';
+        break;
+      case 3:
+        if (!formData.skills.trim()) newErrors.skills = 'At least one skill is required';
+        if (!formData.salary.trim()) newErrors.salary = 'Salary range is required';
+        break;
+      default:
+        break;
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      if (currentStep < 3) {
+        setCurrentStep(prev => prev + 1);
+        window.scrollTo(0, 0);
+      }
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+      window.scrollTo(0, 0);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    if (currentStep !== 3) {
+      handleNext();
+      return;
+    }
+    
+    const step1Valid = validateStep(1);
+    const step2Valid = validateStep(2);
+    const step3Valid = validateStep(3);
+    
+    if (!step1Valid || !step2Valid || !step3Valid) {
       return;
     }
 
@@ -115,36 +185,53 @@ const PostJob = () => {
       }, 2000);
     } catch (err) {
       console.error('Error posting job:', err);
-      
-      if (err.response?.status === 401) {
-        setErrors({ general: 'Your session has expired. Please login again.' });
-        // Clear invalid token
-        localStorage.removeItem('token');
-        navigate('/login');
-      } else if (err.response?.data?.errors) {
-        const apiErrors = {};
-        err.response.data.errors.forEach(error => {
-          apiErrors[error.param] = error.msg;
-        });
-        setErrors(apiErrors);
-      } else {
-        setErrors({ general: err.response?.data?.message || 'Failed to post job. Please try again.' });
-      }
-      
+      setErrors({
+        general: err.response?.data?.message || 'Failed to post job. Please try again.'
+      });
       setLoading(false);
     }
   };
+
+  const renderStepIndicator = () => (
+    <div className="flex items-center justify-center mb-8">
+      {[1, 2, 3].map((step) => (
+        <React.Fragment key={step}>
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              step === currentStep
+                ? 'bg-primary-600 text-white'
+                : step < currentStep
+                ? 'bg-green-500 text-white'
+                : 'bg-gray-200 text-gray-600'
+            }`}
+          >
+            {step < currentStep ? '✓' : step}
+          </div>
+          {step < 3 && (
+            <div
+              className={`h-1 w-16 ${
+                step < currentStep ? 'bg-green-500' : 'bg-gray-200'
+              }`}
+            />
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
 
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 py-8">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto bg-green-100 p-6 rounded-lg text-center">
-            <svg className="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-            </svg>
+          <div className="max-w-2xl mx-auto bg-white/80 rounded-2xl shadow-xl border-2 border-green-500 p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
             <h2 className="text-2xl font-bold text-green-800 mb-2">Job Posted Successfully!</h2>
-            <p className="text-green-700 mb-4">Your job has been posted and is now live. Redirecting to dashboard...</p>
+            <p className="text-green-700 mb-4">Your job has been posted and is now live.</p>
+            <div className="animate-pulse">Redirecting to dashboard...</div>
           </div>
         </div>
       </div>
@@ -154,105 +241,148 @@ const PostJob = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 py-8">
       <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary-900 mb-6">Post a New Job</h1>
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-3xl font-bold text-primary-900 text-center mb-4">Post a New Job</h1>
+          <p className="text-center text-gray-600 mb-8">Find the perfect candidate for your team</p>
+          
+          {renderStepIndicator()}
           
           {errors.general && (
-            <div className="bg-red-100 p-3 rounded mb-4">
+            <div className="bg-red-100 border-l-4 border-red-500 p-4 mb-6">
               <p className="text-red-700">{errors.general}</p>
             </div>
           )}
           
-          <form onSubmit={handleSubmit} className="bg-white/80 rounded-2xl shadow-xl border-2 border-primary-300 p-6 hover:border-primary-500 hover:shadow-glow transition-all duration-300">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-primary-900 mb-4">Job Details</h2>
-              <div className="grid grid-cols-1 gap-4">
+          <form onSubmit={handleSubmit} className="bg-white/80 rounded-2xl shadow-xl border-2 border-primary-300 p-8 hover:border-primary-500 hover:shadow-glow transition-all duration-300">
+            {currentStep === 1 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-primary-900 mb-6 flex items-center">
+                  <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-3">1</span>
+                  Basic Information
+                </h2>
+                
                 <div>
-                  <label htmlFor="title" className="block text-primary-700 mb-2">Job Title</label>
+                  <label className="block text-primary-700 mb-2">Job Title</label>
                   <input
                     type="text"
-                    id="title"
                     name="title"
                     value={formData.title}
                     onChange={handleChange}
-                    className={`w-full p-3 border-2 border-primary-300 rounded ${errors.title ? 'border-red-500' : ''}`}
+                    className={`w-full p-3 border-2 rounded-lg ${
+                      errors.title ? 'border-red-500' : 'border-primary-200'
+                    } focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200`}
                     placeholder="e.g. Senior Frontend Developer"
                   />
                   {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
                 </div>
-                
+
                 <div>
-                  <label htmlFor="company" className="block text-primary-700 mb-2">Company Name</label>
+                  <label className="block text-primary-700 mb-2">Company Name</label>
                   <input
                     type="text"
-                    id="company"
                     name="company"
                     value={formData.company}
                     onChange={handleChange}
-                    className={`w-full p-3 border-2 border-primary-300 rounded ${errors.company ? 'border-red-500' : ''}`}
-                    placeholder="e.g. Acme Inc."
+                    className={`w-full p-3 border-2 rounded-lg ${
+                      errors.company ? 'border-red-500' : 'border-primary-200'
+                    } focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200`}
+                    placeholder="e.g. Tech Solutions Inc."
                   />
                   {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company}</p>}
                 </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="location" className="block text-primary-700 mb-2">Location</label>
+                    <label className="block text-primary-700 mb-2">Location</label>
                     <input
                       type="text"
-                      id="location"
                       name="location"
                       value={formData.location}
                       onChange={handleChange}
-                      className={`w-full p-3 border-2 border-primary-300 rounded ${errors.location ? 'border-red-500' : ''}`}
-                      placeholder="e.g. San Francisco, CA or Remote"
+                      className={`w-full p-3 border-2 rounded-lg ${
+                        errors.location ? 'border-red-500' : 'border-primary-200'
+                      } focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200`}
+                      placeholder="e.g. New York, NY"
                     />
                     {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
                   </div>
-                  
+
                   <div>
-                    <label htmlFor="type" className="block text-primary-700 mb-2">Job Type</label>
+                    <label className="block text-primary-700 mb-2">Job Type</label>
                     <select
-                      id="type"
                       name="type"
                       value={formData.type}
                       onChange={handleChange}
-                      className={`w-full p-3 border-2 border-primary-300 rounded ${errors.type ? 'border-red-500' : ''}`}
+                      className="w-full p-3 border-2 border-primary-200 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                     >
                       {jobTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
                     </select>
-                    {errors.type && <p className="text-red-500 text-sm mt-1">{errors.type}</p>}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-primary-900 mb-6 flex items-center">
+                  <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-3">2</span>
+                  Job Details
+                </h2>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-primary-700 mb-2">Job Description</label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    rows="6"
+                    className={`w-full p-3 border-2 rounded-lg ${
+                      errors.description ? 'border-red-500' : 'border-primary-200'
+                    } focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200`}
+                    placeholder="Describe the role and responsibilities..."
+                  />
+                  {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-primary-700 mb-2">Requirements</label>
+                  <textarea
+                    name="requirements"
+                    value={formData.requirements}
+                    onChange={handleChange}
+                    rows="4"
+                    className={`w-full p-3 border-2 rounded-lg ${
+                      errors.requirements ? 'border-red-500' : 'border-primary-200'
+                    } focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200`}
+                    placeholder="List the key requirements and qualifications..."
+                  />
+                  {errors.requirements && <p className="text-red-500 text-sm mt-1">{errors.requirements}</p>}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="category" className="block text-primary-700 mb-2">Job Category</label>
+                    <label className="block text-primary-700 mb-2">Category</label>
                     <select
-                      id="category"
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
-                      className={`w-full p-3 border-2 border-primary-300 rounded ${errors.category ? 'border-red-500' : ''}`}
+                      className="w-full p-3 border-2 border-primary-200 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                     >
-                      <option value="">Select a category</option>
                       {jobCategories.map(category => (
                         <option key={category} value={category}>{category}</option>
                       ))}
                     </select>
-                    {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
                   </div>
-                  
+
                   <div>
-                    <label htmlFor="experience" className="block text-primary-700 mb-2">Experience Level</label>
+                    <label className="block text-primary-700 mb-2">Experience Level</label>
                     <select
-                      id="experience"
                       name="experience"
                       value={formData.experience}
                       onChange={handleChange}
-                      className="w-full p-3 border-2 border-primary-300 rounded"
+                      className="w-full p-3 border-2 border-primary-200 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                     >
                       {experienceLevels.map(level => (
                         <option key={level} value={level}>{level}</option>
@@ -260,93 +390,107 @@ const PostJob = () => {
                     </select>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-primary-900 mb-6 flex items-center">
+                  <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-3">3</span>
+                  Additional Details
+                </h2>
                 
                 <div>
-                  <label htmlFor="salary" className="block text-primary-700 mb-2">Salary Range (Optional)</label>
+                  <label className="block text-primary-700 mb-2">Required Skills</label>
                   <input
                     type="text"
-                    id="salary"
+                    name="skills"
+                    value={formData.skills}
+                    onChange={handleChange}
+                    className={`w-full p-3 border-2 rounded-lg ${
+                      errors.skills ? 'border-red-500' : 'border-primary-200'
+                    } focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200`}
+                    placeholder="e.g. JavaScript, React, Node.js (comma separated)"
+                  />
+                  {errors.skills && <p className="text-red-500 text-sm mt-1">{errors.skills}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-primary-700 mb-2">Salary Range</label>
+                  <input
+                    type="text"
                     name="salary"
                     value={formData.salary}
                     onChange={handleChange}
-                    className="w-full p-3 border-2 border-primary-300 rounded"
-                    placeholder="e.g. $80,000 - $100,000 per year"
+                    className={`w-full p-3 border-2 rounded-lg ${
+                      errors.salary ? 'border-red-500' : 'border-primary-200'
+                    } focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200`}
+                    placeholder="e.g. 80000 - 100000"
                   />
+                  {errors.salary && <p className="text-red-500 text-sm mt-1">{errors.salary}</p>}
                 </div>
-                
+
                 <div>
-                  <label htmlFor="applicationDeadline" className="block text-primary-700 mb-2">Application Deadline (Optional)</label>
+                  <label className="block text-primary-700 mb-2">Benefits</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {benefitOptions.map(benefit => (
+                      <label key={benefit} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          name="benefits"
+                          value={benefit}
+                          checked={formData.benefits.includes(benefit)}
+                          onChange={handleChange}
+                          className="w-4 h-4 text-primary-600 border-primary-300 rounded focus:ring-primary-500"
+                        />
+                        <span className="text-sm text-gray-700">{benefit}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-primary-700 mb-2">Application Deadline</label>
                   <input
                     type="date"
-                    id="applicationDeadline"
                     name="applicationDeadline"
                     value={formData.applicationDeadline}
                     onChange={handleChange}
-                    className={`w-full p-3 border-2 border-primary-300 rounded ${errors.applicationDeadline ? 'border-red-500' : ''}`}
+                    className="w-full p-3 border-2 border-primary-200 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                   />
-                  {errors.applicationDeadline && <p className="text-red-500 text-sm mt-1">{errors.applicationDeadline}</p>}
                 </div>
               </div>
-            </div>
-            
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-primary-900 mb-4">Job Description & Requirements</h2>
-              
-              <div className="mb-4">
-                <label htmlFor="description" className="block text-primary-700 mb-2">Job Description</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  className={`w-full p-3 border-2 border-primary-300 rounded h-32 ${errors.description ? 'border-red-500' : ''}`}
-                  placeholder="Describe the job responsibilities, role, and what the candidate will be doing..."
-                ></textarea>
-                {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="requirements" className="block text-primary-700 mb-2">Job Requirements</label>
-                <textarea
-                  id="requirements"
-                  name="requirements"
-                  value={formData.requirements}
-                  onChange={handleChange}
-                  className={`w-full p-3 border-2 border-primary-300 rounded h-32 ${errors.requirements ? 'border-red-500' : ''}`}
-                  placeholder="List the qualifications, experience, and education requirements..."
-                ></textarea>
-                {errors.requirements && <p className="text-red-500 text-sm mt-1">{errors.requirements}</p>}
-              </div>
-              
-              <div>
-                <label htmlFor="skills" className="block text-primary-700 mb-2">Required Skills (comma-separated)</label>
-                <input
-                  type="text"
-                  id="skills"
-                  name="skills"
-                  value={formData.skills}
-                  onChange={handleChange}
-                  className={`w-full p-3 border-2 border-primary-300 rounded ${errors.skills ? 'border-red-500' : ''}`}
-                  placeholder="e.g. JavaScript, React, Node.js, TypeScript"
-                />
-                {errors.skills && <p className="text-red-500 text-sm mt-1">{errors.skills}</p>}
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard')}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 transition duration-300"
-              >
-                Cancel
-              </button>
+            )}
+
+            <div className="flex justify-between mt-8">
+              {currentStep > 1 && (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="bg-gray-100 text-gray-600 px-6 py-2 rounded-lg hover:bg-gray-200 transition duration-300"
+                >
+                  Back
+                </button>
+              )}
               <button
                 type="submit"
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition duration-300 disabled:bg-blue-300"
+                className={`${
+                  currentStep === 3
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : 'bg-primary-600 hover:bg-primary-700'
+                } text-white px-6 py-2 rounded-lg transition duration-300 ml-auto`}
                 disabled={loading}
               >
-                {loading ? 'Posting...' : 'Post Job'}
+                {loading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </div>
+                ) : currentStep === 3 ? (
+                  'Post Job'
+                ) : (
+                  'Next Step'
+                )}
               </button>
             </div>
           </form>

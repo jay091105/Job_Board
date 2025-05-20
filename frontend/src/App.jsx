@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
+import ProtectedJobsRoute from './components/ProtectedJobsRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -9,7 +10,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import CandidateDashboard from './pages/CandidateDashboard';
 import EmployerDashboard from './pages/EmployerDashboard';
-import JobListings from './pages/JobListings';
 import JobDetail from './pages/JobDetail';
 import PostJob from './pages/PostJob';
 import SavedJobs from './pages/SavedJobs';
@@ -17,6 +17,7 @@ import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import ApplicationDetail from './pages/ApplicationDetail';
 import ForgotPassword from './pages/ForgotPassword';
+import EditJob from './pages/EditJob';
 
 const App = () => {
   return (
@@ -30,7 +31,7 @@ const App = () => {
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/jobs" element={<JobListings />} />
+              <Route path="/jobs" element={<ProtectedJobsRoute />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route
                 path="/post-job"
@@ -43,6 +44,14 @@ const App = () => {
               <Route path="/jobs/:id" element={<JobDetail />} />
               
               {/* Protected Routes */}
+              <Route
+                path="/jobs/:id/edit"
+                element={
+                  <PrivateRoute role="employer">
+                    <EditJob />
+                  </PrivateRoute>
+                }
+              />
               <Route
                 path="/candidate/dashboard"
                 element={

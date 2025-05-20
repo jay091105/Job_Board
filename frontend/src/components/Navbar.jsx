@@ -1,30 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState(null);
-
-  // Check if user is logged in and get their role
-  React.useEffect(() => {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('userRole');
-    setIsLoggedIn(!!token);
-    setUserRole(role);
-  }, []);
+  const { isAuthenticated, user, logout: authLogout } = useContext(AuthContext);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRole');
-    setIsLoggedIn(false);
-    setUserRole(null);
-    navigate('/');
+    authLogout();
+    navigate('/', { replace: true });
   };
 
   return (
@@ -59,13 +48,15 @@ const Navbar = () => {
 
           {/* Desktop menu */}
           <div className="hidden sm:flex items-center space-x-7">
-            <Link
-              to="/jobs"
-              className="text-white hover:text-primary-100 transition duration-200 text-lg font-medium"
-            >
-              Jobs
-            </Link>
-            {isLoggedIn && userRole === 'employer' && (
+            {(!isAuthenticated || user?.role === 'candidate') && (
+              <Link
+                to="/jobs"
+                className="text-white hover:text-primary-100 transition duration-200 text-lg font-medium"
+              >
+                Jobs
+              </Link>
+            )}
+            {isAuthenticated && user?.role === 'employer' && (
               <Link
                 to="/post-job"
                 className="text-white hover:text-primary-100 transition duration-200 text-lg font-medium"
@@ -74,10 +65,10 @@ const Navbar = () => {
               </Link>
             )}
             
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <>
                 <Link
-                  to={userRole === 'employer' ? '/employer/dashboard' : '/candidate/dashboard'}
+                  to={user?.role === 'employer' ? '/employer/dashboard' : '/candidate/dashboard'}
                   className="text-white hover:text-primary-100 transition duration-200 text-lg font-medium"
                 >
                   Dashboard
@@ -112,14 +103,16 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="sm:hidden py-2 bg-white shadow-soft rounded-lg mt-2">
             <div className="flex flex-col space-y-2">
-              <Link
-                to="/jobs"
-                className="text-secondary-600 hover:text-primary-600 transition duration-200 px-4 py-2 font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Jobs
-              </Link>
-              {isLoggedIn && userRole === 'employer' && (
+              {(!isAuthenticated || user?.role === 'candidate') && (
+                <Link
+                  to="/jobs"
+                  className="text-secondary-600 hover:text-primary-600 transition duration-200 px-4 py-2 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Jobs
+                </Link>
+              )}
+              {isAuthenticated && user?.role === 'employer' && (
                 <Link
                   to="/post-job"
                   className="text-secondary-600 hover:text-primary-600 transition duration-200 px-4 py-2 font-medium"
@@ -128,10 +121,10 @@ const Navbar = () => {
                   Post Job
                 </Link>
               )}
-              {isLoggedIn ? (
+              {isAuthenticated ? (
                 <>
                   <Link
-                    to={userRole === 'employer' ? '/employer/dashboard' : '/candidate/dashboard'}
+                    to={user?.role === 'employer' ? '/employer/dashboard' : '/candidate/dashboard'}
                     className="text-secondary-600 hover:text-primary-600 transition duration-200 px-4 py-2 font-medium"
                     onClick={() => setIsMenuOpen(false)}
                   >

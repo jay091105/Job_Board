@@ -8,6 +8,7 @@ const JobDetail = () => {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showApplyForm, setShowApplyForm] = useState(false);
+  const [userRole, setUserRole] = useState(localStorage.getItem('userRole'));
   const [application, setApplication] = useState({
     resume: null,
     coverLetter: ''
@@ -134,12 +135,21 @@ const JobDetail = () => {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={() => setShowApplyForm(!showApplyForm)}
-                className="bg-gradient-primary text-white px-6 py-2 rounded-lg hover:shadow-glow transition duration-300"
-              >
-                {showApplyForm ? 'Cancel' : 'Apply Now'}
-              </button>
+              {userRole !== 'employer' && (
+                <button
+                  onClick={() => {
+                    if (!localStorage.getItem('token')) {
+                      setError('Please login to apply for this job');
+                      navigate('/login');
+                      return;
+                    }
+                    setShowApplyForm(!showApplyForm);
+                  }}
+                  className="bg-gradient-primary text-white px-6 py-2 rounded-lg hover:shadow-glow transition duration-300"
+                >
+                  {showApplyForm ? 'Cancel' : 'Apply Now'}
+                </button>
+              )}
             </div>
 
             <div className="prose max-w-none">

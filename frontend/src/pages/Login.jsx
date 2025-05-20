@@ -18,6 +18,14 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear errors when user types
+    if (errors[e.target.name]) {
+      setErrors({
+        ...errors,
+        [e.target.name]: null,
+        submit: null
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -26,44 +34,20 @@ const Login = () => {
     setErrors({});
 
     try {
-      console.log('Login attempt with data:', {
-        email: formData.email,
-        passwordLength: formData.password.length
-      });
-      
-      const response = await axios.post('http://localhost:5000/api/auth/login', formData, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      console.log('Login response:', response.data);
+      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
       
       if (response.data.token) {
-        login(response.data.token);
+        const user = await login(response.data.token);
         
-        const token = response.data.token;
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-
-        const { user } = JSON.parse(jsonPayload);
-        localStorage.setItem('userRole', user.role);
-        console.log('Decoded user from token:', user);
-        
+        // Immediate navigation based on role
         if (user.role === 'employer') {
-          navigate('/employer/dashboard');
+          navigate('/employer/dashboard', { replace: true });
         } else {
-          navigate('/candidate/dashboard');
+          navigate('/candidate/dashboard', { replace: true });
         }
       }
     } catch (error) {
-      console.error('Error logging in:', error);
-      console.error('Error response data:', error.response?.data);
-      console.error('Error response status:', error.response?.status);
-      console.error('Error response headers:', error.response?.headers);
+      console.error('Login error:', error);
       
       if (error.response?.data?.errors) {
         const validationErrors = {};
@@ -125,7 +109,14 @@ const Login = () => {
               disabled={loading}
               className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition duration-300 shadow-md disabled:opacity-50"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Logging in...
+                </div>
+              ) : (
+                'Login'
+              )}
             </button>
           </form>
 
