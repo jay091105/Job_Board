@@ -123,6 +123,38 @@ const ApplicationDetail = () => {
                   <p><span className="font-medium">Name:</span> {application.candidate.name}</p>
                   <p><span className="font-medium">Email:</span> {application.candidate.email}</p>
                   <p><span className="font-medium">Phone:</span> {application.candidate.phone || 'Not provided'}</p>
+                  {application.candidate.location && (
+                    <p><span className="font-medium">Location:</span> {application.candidate.location}</p>
+                  )}
+                  {application.candidate.bio && (
+                    <p><span className="font-medium">Bio:</span> {application.candidate.bio}</p>
+                  )}
+                  {application.candidate.skills && application.candidate.skills.length > 0 && (
+                    <p><span className="font-medium">Skills:</span> {Array.isArray(application.candidate.skills) ? application.candidate.skills.join(', ') : application.candidate.skills}</p>
+                  )}
+                  {application.candidate.experience && application.candidate.experience.length > 0 && (
+                    <div>
+                      <span className="font-medium">Experience:</span>
+                      <ul className="list-disc list-inside ml-4">
+                        {application.candidate.experience.map((exp, idx) => (
+                          <li key={idx}>{exp.title || ''} {exp.company ? `at ${exp.company}` : ''} {exp.description ? `- ${exp.description}` : ''}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {application.candidate.education && application.candidate.education.length > 0 && (
+                    <div>
+                      <span className="font-medium">Education:</span>
+                      <ul className="list-disc list-inside ml-4">
+                        {application.candidate.education.map((edu, idx) => (
+                          <li key={idx}>{edu.degree || ''} {edu.field ? `in ${edu.field}` : ''} {edu.school ? `from ${edu.school}` : ''} {edu.description ? `- ${edu.description}` : ''}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {application.candidate.resume && (
+                    <p><span className="font-medium">Resume:</span> <a href={`http://localhost:5000${application.candidate.resume}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Resume</a></p>
+                  )}
                 </div>
               </div>
               <div>
@@ -143,11 +175,11 @@ const ApplicationDetail = () => {
               </div>
             )}
 
-            {application.resume && (
+            {application.resumeUrl && (
               <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-4">Resume</h2>
+                <h2 className="text-lg font-semibold mb-4">Resume (for this application)</h2>
                 <a
-                  href={application.resume}
+                  href={`http://localhost:5000${application.resumeUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline"

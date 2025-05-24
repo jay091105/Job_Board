@@ -1,9 +1,9 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
-const PostJob = () => {
+const PostJob = ({ isEditing = false, initialData = null, jobId = null }) => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useContext(AuthContext);
   const [currentStep, setCurrentStep] = useState(1);
@@ -58,6 +58,12 @@ const PostJob = () => {
     'Gym Membership',
     'Stock Options'
   ];
+
+  useEffect(() => {
+    if (isEditing && initialData) {
+      setFormData(initialData);
+    }
+  }, [isEditing, initialData]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -170,12 +176,21 @@ const PostJob = () => {
         return;
       }
 
-      await axios.post('http://localhost:5000/api/jobs', formattedData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      if (isEditing && jobId) {
+        await axios.put(`http://localhost:5000/api/jobs/${jobId}`, formattedData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } else {
+        await axios.post('http://localhost:5000/api/jobs', formattedData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
       
       setSuccess(true);
       setLoading(false);
@@ -487,7 +502,7 @@ const PostJob = () => {
                     Processing...
                   </div>
                 ) : currentStep === 3 ? (
-                  'Post Job'
+                  isEditing ? 'Update Job' : 'Post Job'
                 ) : (
                   'Next Step'
                 )}

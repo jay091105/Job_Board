@@ -38,6 +38,9 @@ const CandidateDashboard = () => {
         
         // Fetch saved jobs using the correct endpoint
         const savedJobsResponse = await axios.get('http://localhost:5000/api/jobs/saved', { headers });
+        // Fetch user profile
+        const profileResponse = await axios.get('http://localhost:5000/api/users/profile', { headers });
+        const userData = profileResponse.data.data;
 
         setApplications(applicationsResponse.data.data || []);
         setSavedJobs(savedJobsResponse.data.data || []);
@@ -49,6 +52,19 @@ const CandidateDashboard = () => {
           savedJobs: (savedJobsResponse.data.data || []).length
         };
         setStats(stats);
+
+        // Profile completion logic
+        const hasBasicInfo = !!userData.name && !!userData.email;
+        const hasResume = !!userData.resume;
+        const hasSkills = Array.isArray(userData.skills) ? userData.skills.length > 0 : false;
+        const hasExperience = Array.isArray(userData.experience) ? userData.experience.length > 0 && !!userData.experience[0].description : false;
+        setProfileCompletion({
+          basicInfo: hasBasicInfo,
+          resume: hasResume,
+          skills: hasSkills,
+          experience: hasExperience
+        });
+
         setLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -226,8 +242,8 @@ const CandidateDashboard = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Welcome Back!</h1>
-          <div className="flex gap-4">
+          <h1 className="text-3xl font-bold text-primary-900">Candidate Dashboard</h1>
+          <div className="flex gap-4 ml-4">
             <Link
               to="/profile"
               className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition duration-300 shadow-sm border border-gray-200"
@@ -245,14 +261,8 @@ const CandidateDashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard icon={FaBriefcase} title="Total Applications" value={stats.totalApplications} color="blue" />
-          <StatCard icon={FaRegClock} title="Interviews" value={stats.interviews} color="indigo" />
-          <StatCard icon={FaCheckCircle} title="Offers" value={stats.offers} color="green" />
-          <StatCard icon={FaBookmark} title="Saved Jobs" value={stats.savedJobs} color="purple" />
-        </div>
-
-        <div className="bg-white rounded-xl shadow-md">
+        {/* Main dashboard card */}
+        <div className="bg-white rounded-2xl shadow-xl border-2 border-primary-300">
           <div className="flex gap-8 border-b border-gray-200 px-6">
             {['overview', 'applications', 'saved', 'profile'].map((tab) => (
               <button
@@ -274,7 +284,6 @@ const CandidateDashboard = () => {
               </button>
             ))}
           </div>
-
           <div className="p-6">
             {activeTab === 'overview' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

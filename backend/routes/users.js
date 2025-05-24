@@ -83,6 +83,27 @@ router.put('/profile', protect, upload.single('resume'), async (req, res) => {
       }];
     }
 
+    // Handle skills if it's a stringified array or comma-separated string
+    if (typeof updateFields.skills === 'string') {
+      try {
+        const parsed = JSON.parse(updateFields.skills);
+        if (Array.isArray(parsed)) {
+          updateFields.skills = parsed;
+        } else {
+          // fallback: split by comma for plain string
+          updateFields.skills = updateFields.skills.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      } catch {
+        // fallback: split by comma for plain string
+        updateFields.skills = updateFields.skills.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    // Force skills to always be an array of strings
+    if (!Array.isArray(updateFields.skills)) {
+      updateFields.skills = [];
+    }
+    updateFields.skills = updateFields.skills.map(s => String(s).trim()).filter(Boolean);
+
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { $set: updateFields },

@@ -153,7 +153,7 @@ router.get('/:id', protect, async (req, res) => {
       })
       .populate({
         path: 'candidate',
-        select: 'name email'
+        select: 'name email phone location bio skills resume experience education'
       });
 
     if (!application) {

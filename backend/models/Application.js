@@ -30,7 +30,7 @@ const ApplicationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
-});
+}, { timestamps: true });
 
 // Prevent duplicate applications
 ApplicationSchema.index({ job: 1, candidate: 1 }, { unique: true });

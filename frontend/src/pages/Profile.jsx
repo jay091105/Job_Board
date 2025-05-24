@@ -1,9 +1,11 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -35,16 +37,87 @@ const Profile = () => {
           }
         });
         const userData = response.data.data;
+
+        // --- Hardened fix for skills, experience, education to always show as plain text, no matter how deeply nested or stringified ---
+        function extractDescriptionDeep(field) {
+          let parsed = field;
+          let lastDescription = '';
+          let safety = 0;
+          while (parsed && safety < 10) {
+            safety++;
+            if (typeof parsed === 'string') {
+              try {
+                const tryParse = JSON.parse(parsed);
+                parsed = tryParse;
+                continue;
+              } catch {
+                // If it's a string and not JSON, check if it looks like a description
+                return parsed;
+              }
+            }
+            if (Array.isArray(parsed) && parsed[0]) {
+              if (typeof parsed[0].description === 'string') {
+                lastDescription = parsed[0].description;
+                parsed = parsed[0].description;
+                continue;
+              } else {
+                parsed = parsed[0];
+                continue;
+              }
+            }
+            if (typeof parsed === 'object' && parsed !== null) {
+              if (typeof parsed.description === 'string') {
+                lastDescription = parsed.description;
+                parsed = parsed.description;
+                continue;
+              }
+              // If object but no description, break
+              break;
+            }
+            break;
+          }
+          return lastDescription || '';
+        }
+
+        function extractSkillsDeep(skillsField) {
+          let parsed = skillsField;
+          let safety = 0;
+          while (parsed && safety < 10) {
+            safety++;
+            if (typeof parsed === 'string') {
+              // If it looks like a stringified array, always parse and join
+              if (/^\[.*\]$/.test(parsed)) {
+                try {
+                  const arr = JSON.parse(parsed);
+                  if (Array.isArray(arr)) return arr.join(', ');
+                } catch {}
+              }
+              try {
+                const tryParse = JSON.parse(parsed);
+                parsed = tryParse;
+                continue;
+              } catch {
+                return parsed;
+              }
+            }
+            if (Array.isArray(parsed)) {
+              return parsed.join(', ');
+            }
+            break;
+          }
+          return '';
+        }
+
         setFormData({
           name: userData.name || '',
           email: userData.email || '',
           phone: userData.phone || '',
           location: userData.location || '',
           bio: userData.bio || '',
-          skills: userData.skills?.join(', ') || '',
+          skills: extractSkillsDeep(userData.skills),
           company: userData.company || '',
-          experience: userData.experience?.[0]?.description || '',
-          education: userData.education?.[0]?.description || ''
+          experience: extractDescriptionDeep(userData.experience),
+          education: extractDescriptionDeep(userData.education)
         });
         setCurrentResume(userData.resume);
       } catch (err) {
@@ -87,23 +160,32 @@ const Profile = () => {
       const formDataToSubmit = new FormData();
       Object.keys(formData).forEach(key => {
         if (key === 'skills') {
-          formDataToSubmit.append(key, JSON.stringify(formData[key].split(',').map(skill => skill.trim()).filter(Boolean)));
+          // Always send a real array to the backend
+          const arr = formData[key]
+            .split(',')
+            .map(skill => skill.trim())
+            .filter(Boolean);
+          formDataToSubmit.append(key, JSON.stringify(arr));
         } else if (key === 'resume' && formData[key]) {
           formDataToSubmit.append(key, formData[key]);
         } else if (key === 'experience' && formData[key]) {
-          formDataToSubmit.append(key, JSON.stringify([{
-            title: 'Work Experience',
-            description: formData[key],
-            from: new Date(),
-            current: true
-          }]));
+          formDataToSubmit.append(key, JSON.stringify([
+            {
+              title: 'Work Experience',
+              description: formData[key],
+              from: new Date(),
+              current: true
+            }
+          ]));
         } else if (key === 'education' && formData[key]) {
-          formDataToSubmit.append(key, JSON.stringify([{
-            school: 'Education',
-            description: formData[key],
-            from: new Date(),
-            current: true
-          }]));
+          formDataToSubmit.append(key, JSON.stringify([
+            {
+              school: 'Education',
+              description: formData[key],
+              from: new Date(),
+              current: true
+            }
+          ]));
         } else {
           formDataToSubmit.append(key, formData[key]);
         }
@@ -116,6 +198,7 @@ const Profile = () => {
         }
       });
       setSuccess(true);
+      navigate('/candidate/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile');
       console.error('Error updating profile:', err);
