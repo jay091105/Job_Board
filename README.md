@@ -1,75 +1,64 @@
-Job Board
-A full-stack job board application built with Node.js, Express, and React. Users can post, search, and apply for jobs. Employers can manage job listings and view applications.
+# Job Board
+A full-stack job portal built with React and Node.js, enabling users to post, search, and apply for jobs.
 
-🛠 Tech Stack
+# Tech Stack
 Frontend: React, HTML, CSS
 
 Backend: Node.js, Express
 
-Database: (Add your DB, e.g., MongoDB, MySQL)
+Database: (Specify your DB, e.g., MongoDB)
 
-Others: Axios, JWT for authentication, etc.
+Auth: JWT
 
-📁 Project Structure
-bash
+API Communication: Axios
+
+📁 Folder Structure
+go
 Copy
 Edit
 Job_Board/
-├── frontend/     # React app for job seekers and employers
-├── backend/      # Express server and API routes
-├── .vscode/      # Editor configs
-├── package.json  # Project dependencies
+├── frontend/     → React app
+├── backend/      → Express API
+├── .vscode/      → Editor settings
+├── package.json  → Project metadata
 🚀 Features
-Job seeker and employer roles
+User Authentication for Job Seekers & Employers
 
-Job search and filtering
+Job Posting & Management by Employers
 
-Employer dashboard to post and manage jobs
+Search & Filter Jobs by various criteria
 
-Secure login and registration
+Apply for Jobs and track applications
 
-Application submission and tracking
-
-🧑‍💻 Setup Instructions
-Clone the repo:
-
+📦 Installation
 bash
 Copy
 Edit
+# Clone repository
 git clone https://github.com/jay091105/Job_Board.git
 cd Job_Board
-Install backend dependencies:
-
+Backend Setup
 bash
 Copy
 Edit
 cd backend
 npm install
-Install frontend dependencies:
-
+npm run dev
+Frontend Setup
 bash
 Copy
 Edit
 cd ../frontend
 npm install
-Run both servers:
-
-bash
-Copy
-Edit
-# Backend
-cd ../backend
-npm run dev
-
-# Frontend (in another terminal)
-cd ../frontend
 npm start
-Visit http://localhost:3000 to use the app.
+Visit: http://localhost:3000
 
-📌 To-Do
-Add unit tests
+📌 Future Improvements
+Enhanced UI/UX
 
-Improve UI/UX
+Add Unit & Integration Tests
+
+Add Pagination & Sorting
 
 Deploy to Vercel/Render
 
