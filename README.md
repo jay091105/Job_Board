@@ -2,7 +2,7 @@
 A full-stack job portal that allows users to post, browse, and apply for jobs. Built with React on the frontend and Node.js/Express on the backend.
 
 ## 🧠 Features
-- User registration and secure authentication (JWT)-
+- User registration and secure authentication (JWT)
 - Role-based access: Employers & Job Seekers
 - Post, edit, and manage job listings
 - Browse and search for jobs
