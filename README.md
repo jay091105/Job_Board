@@ -1,7 +1,7 @@
 # Job Board
 A full-stack job portal built with React and Node.js, enabling users to post, search, and apply for jobs.
 
-# Tech Stack
+# 🛠 Tech Stack
 Frontend: React, HTML, CSS
 
 Backend: Node.js, Express
@@ -14,27 +14,38 @@ API Communication: Axios
 
 📁 Folder Structure
 go
+
 Copy
+
 Edit
+
 Job_Board/
+
 ├── frontend/     → React app
+
 ├── backend/      → Express API
+
 ├── .vscode/      → Editor settings
+
 ├── package.json  → Project metadata
-🚀 Features
+
+# 🚀 Features
 User Authentication for Job Seekers & Employers
 
 Job Posting & Management by Employers
 
-Search & Filter Jobs by various criteria
+Search & Filter jobs by various criteria
 
-Apply for Jobs and track applications
+Apply for jobs and track applications
 
-📦 Installation
+# 📦 Installation
 bash
+
 Copy
+
 Edit
-# Clone repository
+
+# Clone the repository
 git clone https://github.com/jay091105/Job_Board.git
 cd Job_Board
 Backend Setup
@@ -51,16 +62,16 @@ Edit
 cd ../frontend
 npm install
 npm start
-Visit: http://localhost:3000
+➡️ Visit: http://localhost:3000
 
-📌 Future Improvements
+# 📌 Future Improvements
 Enhanced UI/UX
 
 Add Unit & Integration Tests
 
 Add Pagination & Sorting
 
-Deploy to Vercel/Render
+Deploy to Vercel / Render
 
-📄 License
+# 📄 License
 MIT License
