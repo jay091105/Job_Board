@@ -1,93 +1,105 @@
 # Job Board
-A full-stack job portal built with React and Node.js, enabling users to post, search, and apply for jobs.
+A full-stack job portal that allows users to post, browse, and apply for jobs. Built with React on the frontend and Node.js/Express on the backend.
 
-# 🛠 Tech Stack
-Frontend: React, HTML, CSS
+# 🧠 Features
+User registration and secure authentication (JWT)
 
-Backend: Node.js, Express
+Role-based access: Employers & Job Seekers
 
-Database: (Specify your DB, e.g., MongoDB)
+Post, edit, and manage job listings
 
-Auth: JWT
+Browse and search for jobs
 
-API Communication: Axios
+Apply for jobs with instant feedback
 
-📁 Folder Structure
-go
+Responsive UI with modern design
 
-Copy
+RESTful API for all backend operations
 
-Edit
+# 🛠️ Tech Stack
+Frontend
+React.js
 
-Job_Board/
+HTML5 & CSS3
 
-├── frontend/     → React app
+Axios (for HTTP requests)
 
-├── backend/      → Express API
+React Router DOM
 
-├── .vscode/      → Editor settings
+Backend
+Node.js
 
-├── package.json  → Project metadata
+Express.js
 
-# 🚀 Features
-User Authentication for Job Seekers & Employers
+MongoDB (if applicable)
 
-Job Posting & Management by Employers
+JWT for authentication
 
-Search & Filter jobs by various criteria
+dotenv for configuration
 
-Apply for jobs and track applications
+# 📸 Frontend Preview
+(Add screenshots to the frontend/public/assets folder and update paths accordingly)
 
-# 📦 Installation
+Login Page
+
+Register Page
+
+Dashboard
+
+Job Listings
+
+Job Details & Apply
+
+# 🚀 Getting Started
+Prerequisites
+Make sure you have:
+
+Node.js (v14 or newer)
+
+npm or yarn
+
+MongoDB (if used)
+
+# 🔧 Installation
+Clone the repository
 bash
-
 Copy
-
 Edit
-
-# Clone the repository
 git clone https://github.com/jay091105/Job_Board.git
-
 cd Job_Board
-
 Backend Setup
-
 bash
-
 Copy
-
 Edit
-
 cd backend
-
 npm install
+
+# Create a .env file with the following:
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/jobboard
+JWT_SECRET=your_jwt_secret
 
 npm run dev
-
 Frontend Setup
-
 bash
-
 Copy
-
 Edit
-
 cd ../frontend
-
 npm install
-
 npm start
+📍 Visit the app at: http://localhost:3000
 
-➡️ Visit: http://localhost:3000
+🌟 Future Enhancements
+Add job categories and filters
 
-# 📌 Future Improvements
-Enhanced UI/UX
+Resume upload feature
 
-Add Unit & Integration Tests
+Admin dashboard
 
-Add Pagination & Sorting
+Email notifications
 
 Deploy to Vercel / Render
 
-# 📄 License
-MIT License
+📄 License
+This project is licensed under the MIT License.
+
