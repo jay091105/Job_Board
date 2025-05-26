@@ -47,21 +47,37 @@ Edit
 
 # Clone the repository
 git clone https://github.com/jay091105/Job_Board.git
+
 cd Job_Board
+
 Backend Setup
+
 bash
+
 Copy
+
 Edit
+
 cd backend
+
 npm install
+
 npm run dev
+
 Frontend Setup
+
 bash
+
 Copy
+
 Edit
+
 cd ../frontend
+
 npm install
+
 npm start
+
 ➡️ Visit: http://localhost:3000
 
 # 📌 Future Improvements
