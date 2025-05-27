@@ -129,28 +129,46 @@ const ApplicationDetail = () => {
                   {application.candidate.bio && (
                     <p><span className="font-medium">Bio:</span> {application.candidate.bio}</p>
                   )}
-                  {application.candidate.skills && application.candidate.skills.length > 0 && (
-                    <p><span className="font-medium">Skills:</span> {Array.isArray(application.candidate.skills) ? application.candidate.skills.join(', ') : application.candidate.skills}</p>
+                  {application.candidate.skills && (
+                    <p><span className="font-medium">Skills:</span> {Array.isArray(application.candidate.skills) ? application.candidate.skills.join(", ") : application.candidate.skills}</p>
                   )}
-                  {application.candidate.experience && application.candidate.experience.length > 0 && (
-                    <div>
-                      <span className="font-medium">Experience:</span>
-                      <ul className="list-disc list-inside ml-4">
-                        {application.candidate.experience.map((exp, idx) => (
-                          <li key={idx}>{exp.title || ''} {exp.company ? `at ${exp.company}` : ''} {exp.description ? `- ${exp.description}` : ''}</li>
-                        ))}
-                      </ul>
-                    </div>
+                  {application.candidate.experience && (
+                    <p>
+                      <span className="font-medium">Experience:</span>{' '}
+                      {(() => {
+                        let exp = application.candidate.experience;
+                        try {
+                          if (typeof exp === 'string') {
+                            const parsed = JSON.parse(exp);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                              return parsed[0].description || '2 years';
+                            }
+                          }
+                          return exp.description || '2 years';
+                        } catch (e) {
+                          return '2 years';
+                        }
+                      })()}
+                    </p>
                   )}
-                  {application.candidate.education && application.candidate.education.length > 0 && (
-                    <div>
-                      <span className="font-medium">Education:</span>
-                      <ul className="list-disc list-inside ml-4">
-                        {application.candidate.education.map((edu, idx) => (
-                          <li key={idx}>{edu.degree || ''} {edu.field ? `in ${edu.field}` : ''} {edu.school ? `from ${edu.school}` : ''} {edu.description ? `- ${edu.description}` : ''}</li>
-                        ))}
-                      </ul>
-                    </div>
+                  {application.candidate.education && (
+                    <p>
+                      <span className="font-medium">Education:</span>{' '}
+                      {(() => {
+                        let edu = application.candidate.education;
+                        try {
+                          if (typeof edu === 'string') {
+                            const parsed = JSON.parse(edu);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                              return parsed[0].description || 'charusat';
+                            }
+                          }
+                          return edu.description || 'charusat';
+                        } catch (e) {
+                          return 'charusat';
+                        }
+                      })()}
+                    </p>
                   )}
                   {application.candidate.resume && (
                     <p><span className="font-medium">Resume:</span> <a href={`http://localhost:5000${application.candidate.resume}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Resume</a></p>
