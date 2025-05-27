@@ -32,44 +32,44 @@ A full-stack job portal that allows users to post, browse, and apply for jobs. B
 ## 📸 Frontend Screenshots
 
 
-- **Login Page**
+- **Login Page :-**
 
   ![Login Page](https://raw.githubusercontent.com/jay091105/codsoft_task-1/main/frontend/public/screenshots/login.png)
 
 
-- **Signup Page**  
+- **Signup Page :-**  
 
   ![Signup Page](https://raw.githubusercontent.com/jay091105/codsoft_task-1/main/frontend/public/screenshots/sigup.png)
 
 
-- **Landing Page**  
+- **Landing Page :-**  
 
   ![Landing Page](https://raw.githubusercontent.com/jay091105/codsoft_task-1/main/frontend/public/screenshots/landing.png)
 
 
-- **Candidate Dashboard**  
+- **Candidate Dashboard :-**  
 
   ![Candidate Dashboard](https://raw.githubusercontent.com/jay091105/codsoft_task-1/main/frontend/public/screenshots/candidate_dashboard.png)
 
 
-- **Employee Dashboard**  
+- **Employee Dashboard :-**  
 
   ![Employee Dashboard](https://raw.githubusercontent.com/jay091105/codsoft_task-1/main/frontend/public/screenshots/employee_dashboard.png)
 
 
-- **Profile Page**  
+- **Profile Page :-**  
 
   ![Profile Page](https://raw.githubusercontent.com/jay091105/codsoft_task-1/main/frontend/public/screenshots/profile.png)
 
 
-- **Apply Job 1**  
+- **Apply Job :-**  
 
   ![Apply Job 1](https://raw.githubusercontent.com/jay091105/codsoft_task-1/main/frontend/public/screenshots/apply_job1.png)
   ![Apply Job 2](https://raw.githubusercontent.com/jay091105/codsoft_task-1/main/frontend/public/screenshots/apply_job2.png)
   ![Apply Job 3](https://raw.githubusercontent.com/jay091105/codsoft_task-1/main/frontend/public/screenshots/apply_job3.png)
 
 
-- **Job Detail Page**  
+- **Job Detail Page :-**  
 
   ![Detail Page](https://raw.githubusercontent.com/jay091105/codsoft_task-1/main/frontend/public/screenshots/detail_page.png)
 
